@@ -1,0 +1,22 @@
+CREATE DATABASE IF NOT EXISTS macapa;
+USE macapa;
+
+CREATE TABLE IF NOT EXISTS contacts (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	name VARCHAR ( 200 ) NOT NULL,
+	cell_phone VARCHAR ( 20 ) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	name VARCHAR ( 100 ) NOT NULL,
+	email VARCHAR ( 100 ) NOT NULL UNIQUE,
+	password VARCHAR ( 255 ) NOT NULL,
+	is_active TINYINT(1) DEFAULT 1 COMMENT '0 = inativo, 1 = ativo',
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO users (name, email, password, is_active) 
+VALUES ('Admin', 'test@admin.com', '$2b$10$sk4S6MeqI.JlihdOIiennOyzBcBJC5aSreDRSsUwuPZQ6XESwWGgq', 1);
+

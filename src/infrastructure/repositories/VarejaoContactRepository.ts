@@ -1,0 +1,38 @@
+import { IContact } from "../../domain/interfaces/IContact";
+import { Contact } from "../../domain/entities/Contact";
+import { VarejaoContactModel, VarejaoContactDocument } from "../database/schemas/contact.schema";
+import { Model, Types } from "mongoose";
+
+interface VarejaoDoc extends VarejaoContactDocument {
+  _id: Types.ObjectId;
+}
+
+export class VarejaoContactRepository implements IContact {
+  constructor(private readonly model: Model<VarejaoContactDocument> = VarejaoContactModel) {}
+
+  async findAll(): Promise<Contact[]> {
+    const docs = await this.model.find().lean<VarejaoDoc[]>();
+    return docs.map(this.toDomain);
+  }
+
+  async findById(id: number | string): Promise<Contact | null> {
+    const doc = await this.model.findById(id).lean<VarejaoDoc | null>();
+    return doc ? this.toDomain(doc) : null;
+  }
+
+  async create(contact: Omit<Contact, "id">): Promise<Contact> {
+    const doc = await this.model.create({
+      name: contact.name,
+      cellPhone: contact.cellPhone,
+    });
+    return this.toDomain(doc.toObject() as VarejaoDoc);
+  }
+
+  private toDomain(doc: VarejaoDoc): Contact {
+    return {
+      id: doc._id.toString(),
+      name: doc.name,
+      cellPhone: doc.cellPhone,
+    };
+  }
+}
