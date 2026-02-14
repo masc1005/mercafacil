@@ -6,6 +6,6 @@ export async function connectMongo(): Promise<typeof mongoose> {
   const url = process.env.MONGO_URL || `mongodb://localhost:${port}/${dbName}`;
 
   const connection = await mongoose.connect(url);
-  console.log("✅ MongoDB (varejao) conectado com sucesso");
+  console.log(`✅ MongoDB (${dbName}) conectado com sucesso`);
   return connection;
 }

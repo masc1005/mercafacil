@@ -9,7 +9,7 @@ export const AppDataSource = new DataSource({
   port: Number(process.env.MYSQL_PORT) || 3306,
   username: process.env.MYSQL_USER || "root",
   password: process.env.MYSQL_ROOT_PASSWORD || "root",
-  database: process.env.MYSQL_DB_MACAPA || "macapa",
+  database: process.env.MYSQL_DB_NAME || "macapa",
   entities: [MacapaContactEntity, UserEntity],
   synchronize: false,
   logging: false,

@@ -4,7 +4,8 @@ USE macapa;
 CREATE TABLE IF NOT EXISTS contacts (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 	name VARCHAR ( 200 ) NOT NULL,
-	cell_phone VARCHAR ( 20 ) NOT NULL
+	cell_phone VARCHAR ( 20 ) NOT NULL,
+	anexo VARCHAR ( 255 )
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -19,4 +20,3 @@ CREATE TABLE IF NOT EXISTS users (
 
 INSERT INTO users (name, email, password, is_active) 
 VALUES ('Admin', 'test@admin.com', '$2b$10$sk4S6MeqI.JlihdOIiennOyzBcBJC5aSreDRSsUwuPZQ6XESwWGgq', 1);
-

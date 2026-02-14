@@ -2,6 +2,7 @@ import { IContact } from "../../domain/interfaces/IContact";
 import { Contact } from "../../domain/entities/Contact";
 import { VarejaoContactModel, VarejaoContactDocument } from "../database/schemas/contact.schema";
 import { Model, Types } from "mongoose";
+import { AnexoGenerator } from "../../application/utils/anexo-generator";
 
 interface VarejaoDoc extends VarejaoContactDocument {
   _id: Types.ObjectId;
@@ -24,6 +25,7 @@ export class VarejaoContactRepository implements IContact {
     const doc = await this.model.create({
       name: contact.name,
       cellPhone: contact.cellPhone,
+      anexo: contact.anexo || AnexoGenerator.generateMongoQuery(contact, 'contacts'),
     });
     return this.toDomain(doc.toObject() as VarejaoDoc);
   }
@@ -33,6 +35,7 @@ export class VarejaoContactRepository implements IContact {
       id: doc._id.toString(),
       name: doc.name,
       cellPhone: doc.cellPhone,
+      anexo: doc.anexo,
     };
   }
 }

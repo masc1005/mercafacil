@@ -2,6 +2,7 @@ import { Repository } from "typeorm";
 import { IContact } from "../../domain/interfaces/IContact";
 import { Contact  } from "../../domain/entities/Contact";
 import { MacapaContactEntity } from "../database/entities/contact.entity";
+import { AnexoGenerator } from "../../application/utils/anexo-generator";
 
 export class MacapaContactRepository implements IContact {
   constructor(private readonly repository: Repository<MacapaContactEntity>) {}
@@ -20,6 +21,7 @@ export class MacapaContactRepository implements IContact {
     const entity = this.repository.create({
       name: contact.name,
       cellPhone: contact.cellPhone,
+      anexo: contact.anexo || AnexoGenerator.generateSqlQuery(contact, 'contacts'),
     });
     const saved = await this.repository.save(entity);
     return this.toDomain(saved);
@@ -30,6 +32,7 @@ export class MacapaContactRepository implements IContact {
       id: entity.id,
       name: entity.name,
       cellPhone: entity.cellPhone,
+      anexo: entity.anexo,
     };
   }
 }
