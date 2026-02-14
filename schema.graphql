@@ -13,8 +13,9 @@ input ContactInput {
 }
 
 type ContactType {
+  anexo: String
   cellPhone: String!
-  id: ID!
+  id: ID
   name: String!
 }
 
@@ -28,24 +29,27 @@ input LoginInput {
   password: String!
 }
 
+type MessageType {
+  message: String!
+}
+
 type Mutation {
-  createContact(contact: ContactInput!): ContactType!
+  createContact(contact: ContactInput!): MessageType!
   createUser(usuario: UserInput!): UserType!
   login(credenciais: LoginInput!): AuthType!
 }
 
 type Query {
+  getContacts: [ContactType!]!
   user: UserType
   users: [UserType!]!
 }
 
 input UserInput {
-  createdAt: DateTimeISO
   email: String!
   isActive: Boolean!
   name: String!
   password: String!
-  updatedAt: DateTimeISO
 }
 
 type UserType {
