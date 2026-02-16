@@ -1,10 +1,9 @@
-version: "3.8"
-
 services:
   app:
     build: .
+    container_name: app_node
     ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - "${APP_PORT:-3000}:${APP_PORT:-3000}"
     depends_on:
       mysql:
         condition: service_healthy
@@ -13,55 +12,65 @@ services:
       kafka:
         condition: service_healthy
     environment:
-      # Variáveis que a tua aplicação Node.js vai ler (process.env)
-      - APP_PORT=${APP_PORT}
-      - MYSQL_HOST=mysql
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DB=${MYSQL_DB_NAME}
-      - MONGO_URL=mongodb://mongo:27017/${MONGO_DB_NAME}
-      - KAFKA_BROKER=kafka:29092
-      - AUTH_SECRET=${AUTH_SECRET}
+      NODE_ENV: development
+      PORT: ${APP_PORT:-3000}
+      MYSQL_HOST: mysql
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DB_NAME: ${MYSQL_DB_NAME:-macapa}
+      MONGO_URL: mongodb://mongo:27017/${MONGO_DB_NAME:-varejao}
+      KAFKA_BROKER: kafka:29092
+      KAFKA_CLIENT_ID: app-node-producer
+      AUTH_SECRET: ${AUTH_SECRET:-default-secret-change-in-production}
     networks:
       - app-network
+    restart: unless-stopped
 
   mysql:
     image: mysql:8.0
+    container_name: db_mysq
+    platform: linux/amd64 
     command: --default-authentication-plugin=mysql_native_password
-    platform: linux/amd64
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DB_NAME:-macapa}
     ports:
-      - "${MYSQL_PORT}:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
-      - ./data/create-table-macapa.sql:/docker-entrypoint-initdb.d/create-table-macapa.sql:z
-      - ./data/create-table-varejao.sql:/docker-entrypoint-initdb.d/create-table-varejao.sql:z
+      - ./data/create-table-macapa.sql:/docker-entrypoint-initdb.d/01-create-table-macapa.sql:z
+      - ./data/create-table-varejao.sql:/docker-entrypoint-initdb.d/02-create-table-varejao.sql:z
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - app-network
+    restart: unless-stopped
 
   mongo:
     image: mongo:6.0
+    container_name: db_mongo
     ports:
-      - "${MONGO_PORT}:27017"
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
       - ./data/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:z
+      - mongo_data:/data/db
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
     networks:
       - app-network
+    restart: unless-stopped
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
+    container_name: kafka_zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -72,12 +81,14 @@ services:
       test: ["CMD", "nc", "-z", "localhost", "2181"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     networks:
       - app-network
+    restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka_broker
     depends_on:
       zookeeper:
         condition: service_healthy
@@ -86,23 +97,26 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     volumes:
       - kafka_data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 15s
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:29092", "--list"]
+      interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - app-network
+    restart: unless-stopped
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
+    container_name: kafka_ui
     depends_on:
       kafka:
         condition: service_healthy
@@ -113,6 +127,7 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
     networks:
       - app-network
+    restart: unless-stopped
 
 networks:
   app-network:
@@ -120,6 +135,7 @@ networks:
 
 volumes:
   mysql_data:
+  mongo_data:
   kafka_data:
   zookeeper_data:
   zookeeper_log:

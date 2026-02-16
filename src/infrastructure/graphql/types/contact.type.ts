@@ -10,7 +10,4 @@ export class ContactType {
 
   @Field()
   cellPhone: string;
-
-  @Field({ nullable: true })
-  anexo?: string;
 }

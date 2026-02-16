@@ -20,18 +20,24 @@ export class ContactResolver {
     private readonly macapaRepository: IContact,
     private readonly varejaoRepository: IContact
   ) {
-    this.createContactUseCase = new CreateContactUseCase(userRepository, kafkaProducer);
+    this.createContactUseCase = new CreateContactUseCase(userRepository, kafkaProducer, macapaRepository, varejaoRepository);
     this.findContactsUseCase = new FindContactsUseCase(userRepository, macapaRepository, varejaoRepository);
   }
 
   @UseMiddleware(AuthMiddleware)
   @Mutation(() => MessageType)
-  async createContact(@Arg("contact") contact: ContactInput, @Ctx() ctx: Context): Promise<MessageType> {
-    return this.createContactUseCase.execute({
-        name: contact.name,
-        phone: contact.cellPhone,
-        userId: ctx.userId!
-    });
+  async createContact(
+    @Arg("contacts", () => [ContactInput]) contacts: ContactInput[], 
+    @Ctx() ctx: Context
+  ): Promise<MessageType> {
+    const contactsDTO = contacts.map(contact => ({
+      name: contact.name,
+      phone: contact.cellphone,
+      userId: ctx.userId!
+    }));
+
+
+    return this.createContactUseCase.execute(contactsDTO);
   }
 
   @UseMiddleware(AuthMiddleware)

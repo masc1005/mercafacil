@@ -2,24 +2,28 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache python3 make g++
 COPY package*.json ./
-RUN npm install
+
+RUN npm ci
+
 COPY . .
+
 RUN npm run build
 
 FROM node:20-alpine
 
 WORKDIR /app
 
+ENV NODE_ENV=development
+
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 
-RUN apk add --no-cache --virtual .build-deps python3 make g++ \
-    && apk add --no-cache libstdc++ \
-    && npm install --omit=dev \
-    && npm rebuild bcrypt --build-from-source \
-    && apk del .build-deps
+RUN npm ci --omit=dev && npm cache clean --force
+
+RUN chown -R node:node /app
+
+USER node
 
 EXPOSE 3000
 

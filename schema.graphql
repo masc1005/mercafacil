@@ -8,12 +8,11 @@ type AuthType {
 }
 
 input ContactInput {
-  cellPhone: String!
+  cellphone: String!
   name: String!
 }
 
 type ContactType {
-  anexo: String
   cellPhone: String!
   id: ID
   name: String!
@@ -30,11 +29,11 @@ input LoginInput {
 }
 
 type MessageType {
-  message: String!
+  messages: [String!]!
 }
 
 type Mutation {
-  createContact(contact: ContactInput!): MessageType!
+  createContact(contacts: [ContactInput!]!): MessageType!
   createUser(usuario: UserInput!): UserType!
   login(credenciais: LoginInput!): AuthType!
 }

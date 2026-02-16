@@ -23,6 +23,14 @@ export class LoginUseCase {
       throw new Error("Usuário não existe");
     }
 
+    if(!existingUser.isActive) {
+      throw new Error("Usuário inativo")
+    }
+
+    if(input.email !== existingUser.email) {
+      throw new Error("Email invalido")
+    }
+
     const comparedPassword = await compare(input.password, existingUser.password)
 
     if(!comparedPassword) {

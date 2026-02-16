@@ -6,5 +6,5 @@ export class ContactInput {
   name: string;
 
   @Field()
-  cellPhone: string;
+  cellphone: string;
 }

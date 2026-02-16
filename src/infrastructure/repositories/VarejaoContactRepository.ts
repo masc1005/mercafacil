@@ -12,12 +12,18 @@ export class VarejaoContactRepository implements IContact {
   constructor(private readonly model: Model<VarejaoContactDocument> = VarejaoContactModel) {}
 
   async findAll(): Promise<Contact[]> {
-    const docs = await this.model.find().lean<VarejaoDoc[]>();
+    const docs = await this.model.find()
+      .select(['id', 'name', 'cellPhone']).lean<VarejaoDoc[]>();
     return docs.map(this.toDomain);
   }
 
   async findById(id: number | string): Promise<Contact | null> {
     const doc = await this.model.findById(id).lean<VarejaoDoc | null>();
+    return doc ? this.toDomain(doc) : null;
+  }
+
+  async findByPhone(phone: string): Promise<Contact | null> {
+    const doc = await this.model.findOne({ cellPhone: phone }).lean<VarejaoDoc | null>();
     return doc ? this.toDomain(doc) : null;
   }
 
@@ -35,7 +41,6 @@ export class VarejaoContactRepository implements IContact {
       id: doc._id.toString(),
       name: doc.name,
       cellPhone: doc.cellPhone,
-      anexo: doc.anexo,
     };
   }
 }

@@ -1,19 +1,26 @@
 import { Repository } from "typeorm";
 import { IContact } from "../../domain/interfaces/IContact";
-import { Contact  } from "../../domain/entities/Contact";
+import { Contact } from "../../domain/entities/Contact";
 import { MacapaContactEntity } from "../database/entities/contact.entity";
 import { AnexoGenerator } from "../../application/utils/anexo-generator";
 
 export class MacapaContactRepository implements IContact {
-  constructor(private readonly repository: Repository<MacapaContactEntity>) {}
+  constructor(private readonly repository: Repository<MacapaContactEntity>) { }
 
   async findAll(): Promise<Contact[]> {
-    const entities = await this.repository.find();
+    const entities = await this.repository.find({
+      select: ['id', 'name', 'cellPhone']
+    });
     return entities.map(this.toDomain);
   }
 
   async findById(id: number): Promise<Contact | null> {
     const entity = await this.repository.findOneBy({ id });
+    return entity ? this.toDomain(entity) : null;
+  }
+
+  async findByPhone(phone: string): Promise<Contact | null> {
+    const entity = await this.repository.findOneBy({ cellPhone: phone });
     return entity ? this.toDomain(entity) : null;
   }
 
@@ -32,7 +39,6 @@ export class MacapaContactRepository implements IContact {
       id: entity.id,
       name: entity.name,
       cellPhone: entity.cellPhone,
-      anexo: entity.anexo,
     };
   }
 }

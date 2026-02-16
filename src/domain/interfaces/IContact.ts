@@ -4,4 +4,5 @@ export interface IContact {
   findAll(): Promise<Contact[]>;
   findById(id: number | string): Promise<Contact | null>;
   create(contact: Omit<Contact, "id">): Promise<Contact>;
+  findByPhone(phone: string): Promise<Contact | null>;
 }

@@ -2,6 +2,8 @@ import { IUser } from '../../../domain/interfaces/IUser';
 import { CreateContactDTO } from '../../dtos/contact/create-contact.dto';
 import { KafkaProducerService } from "../../../infrastructure/kafka/producer";
 import { formatPhone, extractDigits } from '../../utils/format-phone';
+import { IContact } from '../../../domain/interfaces/IContact';
+import { formatName } from '../../utils/format-name';
 
 const TOPIC_MAP: Record<string, string> = {
   macapa: 'macapa-contacts',
@@ -11,43 +13,78 @@ const TOPIC_MAP: Record<string, string> = {
 export class CreateContactUseCase {
   constructor(
     private readonly userRepository: IUser,
-    private readonly producer: KafkaProducerService
-  ) {}
+    private readonly producer: KafkaProducerService,
+    private readonly macapaRepository: IContact,
+    private readonly varejaoRepository: IContact
+  ) { }
 
-  async execute(input: CreateContactDTO): Promise<{ message: string }> {
-    if (!input.name || input.name.trim().length < 2) {
-      throw new Error("Nome é obrigatório e deve ter pelo menos 2 caracteres");
+  async execute(input: CreateContactDTO | CreateContactDTO[]): Promise<{ messages: string[] }> {
+    const contacts = Array.isArray(input) ? input : [input];
+
+    let messages: string[] = [];
+
+    if (contacts.length === 0) {
+      throw new Error("Lista de contatos não pode ser vazia");
     }
 
-    if (!input.phone || input.phone.trim().length === 0) {
-      throw new Error("Telefone é obrigatório");
-    }
+    await Promise.all(
+      contacts.map(async (contact) => {
+        if (!contact.name || contact.name.trim().length < 2) {
+          throw new Error(`Nome inválido para o contato: ${contact.name || 'Sem nome'}`);
+        }
 
-    const digits = extractDigits(input.phone);
-    if (digits.length < 13) {
-      throw new Error("Telefone deve conter pelo menos 13 dígitos");
-    }
+        if (!contact.phone || contact.phone.trim().length === 0) {
+          throw new Error(`Telefone é obrigatório para o contato: ${contact.name}`);
+        }
 
-    const existingUser = await this.userRepository.findById(input.userId);
+        const digits = extractDigits(contact.phone);
+        if (digits.length < 13) {
+          throw new Error(`Telefone do contato ${contact.name} deve conter pelo menos 13 dígitos`);
+        }
 
-    if (!existingUser) {
-      throw new Error("Usuário não existe");
-    }
+        const existingUser = await this.userRepository.findById(contact.userId);
 
-    const storeName = existingUser.name.toLowerCase();
-    const topic = TOPIC_MAP[storeName];
+        if (!existingUser) {
+          throw new Error(`Usuário não encontrado para o ID: ${contact.userId}`);
+        }
 
-    if (!topic) {
-      throw new Error(`Tipo de usuário desconhecido: ${existingUser.name}`);
-    }
+        const storeName = existingUser.name.toLowerCase();
 
-    const formattedPhone = formatPhone(input.phone, storeName);
+        if (existingUser.email.includes('macapa')) {
+          const formattedPhone = formatPhone(contact.phone, storeName);
+          const contacts = await this.macapaRepository.findByPhone(formattedPhone);
 
-    await this.producer.send(topic, {
-      name: input.name,
-      cellPhone: formattedPhone,
-    });
+          if (contacts) {
+            messages.push(`Contato com telefone ${contact.phone} já existe para o usuário ${existingUser.name}`);
+            return null;
+          }
+        } else if (existingUser.email.includes('varejao')) {
+          const formattedPhone = formatPhone(contact.phone, storeName);
+          const contacts = await this.varejaoRepository.findByPhone(formattedPhone);
 
-    return { message: "Dado recebido, logo os dados estarão disponíveis para consulta" };
+          if (contacts) {
+            messages.push(`Contato com telefone ${contact.phone} já existe para o usuário ${existingUser.name}`);
+            return null;
+          }
+        }
+
+        const topic = TOPIC_MAP[storeName];
+
+        if (!topic) {
+          throw new Error(`Tipo de usuário desconhecido: ${existingUser.name}`);
+        }
+
+        const formattedPhone = formatPhone(contact.phone, storeName);
+        const formattedName = formatName(contact.name, storeName);
+        await this.producer.send(topic, {
+          name: formattedName,
+          cellPhone: formattedPhone,
+        });
+
+        messages.push(`Contato ${contact.name} enviado para processamento, logo estara disponivel para consulta!`);
+      })
+    );
+
+    return { messages };
   }
 }
