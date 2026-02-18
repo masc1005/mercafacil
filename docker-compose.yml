@@ -21,7 +21,7 @@ services:
       MONGO_URL: mongodb://mongo:27017/${MONGO_DB_NAME:-varejao}
       KAFKA_BROKER: kafka:29092
       KAFKA_CLIENT_ID: app-node-producer
-      AUTH_SECRET: ${AUTH_SECRET:-default-secret-change-in-production}
+      AUTH_SECRET: ${AUTH_SECRET:-default-secret-change-in-development}
     networks:
       - app-network
     restart: unless-stopped

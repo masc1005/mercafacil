@@ -12,5 +12,5 @@ export class MacapaContactEntity {
   cellPhone: string;
 
   @Column({ type: "varchar", length: 255, nullable: true })
-  anexo: string; // Stores SQL insert query like: "INSERT INTO clientes (nome, telefone) VALUES ('Marina Rodrigues', '5541996941919');"
+  anexo: string;
 }

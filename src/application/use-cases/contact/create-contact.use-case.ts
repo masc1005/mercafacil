@@ -81,7 +81,9 @@ export class CreateContactUseCase {
           cellPhone: formattedPhone,
         });
 
-        messages.push(`Contato ${contact.name} enviado para processamento, logo estara disponivel para consulta!`);
+        messages.push(
+          `Contato ${contact.name} enviado para processamento, logo estara disponivel para consulta para o cliente ${existingUser.name}!`
+        );
       })
     );
 
