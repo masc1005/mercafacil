@@ -183,6 +183,19 @@ O diretório `data/` contém scripts executados automaticamente na primeira inic
 
 ---
 
+## 🤖 Uso de IA
+
+Este projeto foi desenvolvido com auxílio de ferramentas de **Inteligência Artificial** como assistentes de código. A IA foi utilizada nas seguintes etapas:
+
+| Etapa                       | Como a IA ajudou                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Setup de Infraestrutura** | Configuração do `docker-compose.yml` (MySQL, MongoDB, Kafka, Zookeeper), `Dockerfile` multi-stage       |
+| **Documentação**            | Geração e organização deste README                                                                      |
+
+> A IA atuou como **pair programmer**, auxiliando na revisão de código, revisão de arquitetura e documentação. Todas as decisões técnicas foram validadas e supervisionadas.
+
+---
+
 ## 🧱 Padrões de Projeto
 
 - **Clean Architecture** — separação em camadas (domain → application → infrastructure)
