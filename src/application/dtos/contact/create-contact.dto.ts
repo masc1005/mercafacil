@@ -1,5 +1,5 @@
 export interface CreateContactDTO {
     name: string,
-    phone: string
-    userId: number
+    phone: string,
+    userId: number,
 }
